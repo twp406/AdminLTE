@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="价探 PriceLens：电商商品价格采集、清洗去重、横向对比与性价比分析工作台。">
+  <title>价探 PriceLens · 电商比价工作台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ffb454'/%3E%3Ccircle cx='14' cy='14' r='7' fill='none' stroke='%231a1206' stroke-width='2.4'/%3E%3Cpath d='M19.5 19.5 25 25' stroke='%231a1206' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M10.5 12.5h7M14 9v8' stroke='%231a1206' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-glow" aria-hidden="true"></div>
+  <div class="page-grid" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#overview" aria-label="价探首页">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="14" cy="14" r="8.5" stroke="currentColor" stroke-width="2.2"/>
+          <path d="M20.5 20.5 27 27" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M10.5 12.2h7M14 9.4v8.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="brand-text">价探<em>PriceLens</em></span>
+    </a>
+    <nav class="topnav" aria-label="页面导航">
+      <a href="#overview">概览</a>
+      <a href="#compare">商品对比</a>
+      <a href="#trend">价格趋势</a>
+      <a href="#quality">数据质量</a>
+    </nav>
+    <div class="top-actions">
+      <span class="mode-pill" id="modePill"><i></i><span>离线演示 · 可复现</span></span>
+      <a class="ghost-btn" href="#quality">运行说明</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><span></span>PRICE INTELLIGENCE · 三平台实时比价</div>
+        <h1>一次搜索，<br>看清<span class="grad">价格底牌</span>。</h1>
+        <p class="hero-desc">
+          采集京东、淘宝、拼多多的商品价格、销量与店铺评分，
+          自动完成字段清洗、重复合并与异常检测，再给出性价比排序和价格趋势。
+        </p>
+        <div class="hero-meta">
+          <span><b>51</b> 条原始样本</span>
+          <span><b>6</b> 类脏数据</span>
+          <span><b>3</b> 维加权</span>
+          <span><b>30</b> 天趋势</span>
+        </div>
+      </div>
+
+      <div class="search-card reveal" style="--delay: .08s">
+        <div class="card-head">
+          <span class="card-label">搜索采集</span>
+          <span class="card-hint">输入关键词，现场运行采集脚本</span>
+        </div>
+        <form id="searchForm" autocomplete="off">
+          <div class="search-row">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M16 16.5 20.5 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input id="keyword" name="keyword" value="无线蓝牙耳机" maxlength="30" placeholder="例如：无线蓝牙耳机" aria-label="搜索关键词">
+            <button class="run-btn" id="runBtn" type="submit">
+              <span class="btn-label">开始采集</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+
+          <div class="presets" id="presets" aria-label="示例关键词">
+            <span class="presets-label">示例</span>
+            <button type="button" class="preset" data-keyword="无线蓝牙耳机">无线蓝牙耳机</button>
+            <button type="button" class="preset" data-keyword="机械键盘">机械键盘</button>
+            <button type="button" class="preset" data-keyword="保温杯">保温杯</button>
+            <button type="button" class="preset" data-keyword="空气炸锅">空气炸锅</button>
+            <button type="button" class="preset" data-keyword="电动牙刷">电动牙刷</button>
+          </div>
+
+          <div class="controls">
+            <div class="control">
+              <span class="control-label">采集平台</span>
+              <div class="platform-toggles">
+                <label class="ptoggle jd"><input type="checkbox" name="platform" value="jd" checked><i></i>京东</label>
+                <label class="ptoggle tb"><input type="checkbox" name="platform" value="tb" checked><i></i>淘宝</label>
+                <label class="ptoggle pdd"><input type="checkbox" name="platform" value="pdd" checked><i></i>拼多多</label>
+              </div>
+            </div>
+            <label class="control">
+              <span class="control-label">排序</span>
+              <select id="sortSelect">
+                <option value="price">价格从低到高</option>
+                <option value="value">性价比优先</option>
+                <option value="sales">销量优先</option>
+                <option value="rating">评分优先</option>
+              </select>
+            </label>
+            <label class="control">
+              <span class="control-label">数据源</span>
+              <select id="sourceSelect">
+                <option value="demo">离线演示数据</option>
+                <option value="live">实时采集（需网络）</option>
+              </select>
+            </label>
+          </div>
+        </form>
+
+        <div class="run-strip">
+          <div class="pipeline" id="pipeline"></div>
+          <div class="run-status" id="statusText" aria-live="polite">等待运行</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kpis" id="overview" aria-label="关键指标">
+      <article class="kpi reveal" style="--delay: .02s">
+        <div class="kpi-top"><span>全场最低价</span><svg viewBox="0 0 20 20" fill="none"><path d="M10 3v14M5.5 8 10 3.5 14.5 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <div class="kpi-value" id="kpiLow">--</div>
+        <div class="kpi-sub" id="kpiLowSub">等待采集</div>
+      </article>
+      <article class="kpi reveal" style="--delay: .06s">
+        <div class="kpi-top"><span>价格中位数</span><svg viewBox="0 0 20 20" fill="none"><path d="M3 15 7.5 9l3.5 3 5-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 5h4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="kpi-value" id="kpiMedian">--</div>
+        <div class="kpi-sub" id="kpiMedianSub">等待采集</div>
+      </article>
+      <article class="kpi reveal" style="--delay: .1s">
+        <div class="kpi-top"><span>有效商品</span><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg></div>
+        <div class="kpi-value" id="kpiCount">--</div>
+        <div class="kpi-sub" id="kpiCountSub">等待采集</div>
+      </article>
+      <article class="kpi reveal" style="--delay: .14s">
+        <div class="kpi-top"><span>清洗动作</span><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5 8 14.5 16 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="kpi-value" id="kpiClean">--</div>
+        <div class="kpi-sub" id="kpiCleanSub">等待采集</div>
+      </article>
+    </section>
+
+    <section class="picks-section">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow small"><span></span>VALUE PICKS</div>
+          <h2>性价比推荐</h2>
+        </div>
+        <p class="section-desc">价格 45% · 销量 35% · 店铺评分 20% 归一化加权，推荐位互不重复。</p>
+      </div>
+      <div class="picks" id="picks"></div>
+    </section>
+
+    <section class="compare-grid">
+      <div class="panel table-panel" id="compare">
+        <div class="panel-head">
+          <div>
+            <h2>商品横向对比</h2>
+            <p class="panel-sub" id="tableSub">按价格从低到高排序</p>
+          </div>
+          <div class="panel-actions">
+            <div class="sort-tabs" role="tablist" aria-label="排序方式">
+              <button class="sort-tab active" data-sort="price" role="tab">价格</button>
+              <button class="sort-tab" data-sort="value" role="tab">性价比</button>
+              <button class="sort-tab" data-sort="sales" role="tab">销量</button>
+              <button class="sort-tab" data-sort="rating" role="tab">评分</button>
+            </div>
+            <div class="export-group">
+              <a class="icon-btn" id="exportCsv" href="#" title="导出 CSV">CSV</a>
+              <a class="icon-btn" id="exportMd" href="#" title="导出 Markdown">MD</a>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th class="c-rank">#</th>
+                <th class="c-prod">商品 / 店铺</th>
+                <th class="c-price">价格</th>
+                <th class="c-sales">月销</th>
+                <th class="c-rating">店铺评分</th>
+                <th class="c-score">性价比</th>
+                <th class="c-tags">标签</th>
+                <th class="c-link" aria-label="商品链接"></th>
+              </tr>
+            </thead>
+            <tbody id="productRows"></tbody>
+          </table>
+          <div class="table-empty" id="tableEmpty">输入关键词后开始采集</div>
+        </div>
+        <div class="table-foot" id="tableFoot"></div>
+      </div>
+
+      <aside class="side">
+        <div class="panel platform-panel">
+          <div class="panel-head compact">
+            <div>
+              <h2>平台横向对比</h2>
+              <p class="panel-sub">价格区间与中位价</p>
+            </div>
+          </div>
+          <div class="platform-bars" id="platformBars"></div>
+        </div>
+
+        <div class="panel log-panel">
+          <div class="panel-head compact">
+            <div>
+              <h2>运行日志<span class="live-dot" aria-hidden="true"></span></h2>
+              <p class="panel-sub">采集脚本实时输出</p>
+            </div>
+          </div>
+          <div class="run-log" id="runLog"></div>
+          <div class="run-meta" id="runMeta"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel trend-panel" id="trend">
+      <div class="panel-head">
+        <div>
+          <h2>价格趋势</h2>
+          <p class="panel-sub" id="trendSub">近 30 天平台均价走势</p>
+        </div>
+        <div class="trend-actions">
+          <div class="trend-tabs" role="tablist" aria-label="趋势维度">
+            <button class="trend-tab active" data-mode="platform" role="tab">平台均价</button>
+            <button class="trend-tab" data-mode="product" role="tab">推荐单品</button>
+          </div>
+          <span class="delta-chip" id="deltaChip">--</span>
+        </div>
+      </div>
+      <div class="chart-wrap" id="chartWrap">
+        <svg id="trendChart" viewBox="0 0 960 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="价格趋势图"></svg>
+        <div class="chart-tip" id="chartTip" hidden></div>
+      </div>
+      <div class="chart-legend" id="chartLegend"></div>
+      <p class="chart-note" id="chartNote"></p>
+    </section>
+
+    <section class="panel quality-panel" id="quality">
+      <div class="panel-head">
+        <div>
+          <h2>数据质量与样本</h2>
+          <p class="panel-sub">从原始脏数据到可对比结果的完整链路</p>
+        </div>
+        <span class="quality-badge" id="qualityBadge">等待运行</span>
+      </div>
+
+      <div class="funnel" id="funnel"></div>
+
+      <div class="samples">
+        <div class="sample-box">
+          <div class="sample-head">
+            <span class="sample-title">原始样本 <em>raw</em></span>
+            <span class="sample-note">含货币符号 / HTML / 缺失字段</span>
+          </div>
+          <pre id="rawSample" class="code-block">等待采集...</pre>
+        </div>
+        <div class="sample-box">
+          <div class="sample-head">
+            <span class="sample-title">清洗结果 <em>cleaned</em></span>
+            <span class="sample-note">统一字段 + 评分 + 标签</span>
+          </div>
+          <pre id="cleanSample" class="code-block">等待采集...</pre>
+        </div>
+      </div>
+
+      <div class="quality-notes">
+        <span><i class="ok"></i>价格、销量、评分字段归一化</span>
+        <span><i class="ok"></i>同平台重复铺货自动合并</span>
+        <span><i class="ok"></i>绝对值 + 中位数倍数识别异常价</span>
+        <span><i class="ok"></i>缺失评分按平台中位数补全</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-brand">
+      <span class="brand-mark small" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none"><circle cx="14" cy="14" r="8.5" stroke="currentColor" stroke-width="2.4"/><path d="M20.5 20.5 27 27" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M10.5 12.2h7M14 9.4v8.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </span>
+      <span>价探 PriceLens</span>
+    </div>
+    <p class="footer-note">
+      默认使用离线确定性演示数据，可直接运行、可复现。实时采集受平台风控与登录态限制，请遵守 robots.txt 与服务条款，控制频率，仅用于学习研究。
+    </p>
+    <code class="footer-cmd">python cli.py search "无线蓝牙耳机"</code>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
